@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package irisclassification;
+
+option go_package = "irisclassificationpb";
+
+// IrisClassificationService is a service to predict the Iris Classification given input
+service IrisClassificationService {
+  // Predict the Iris Classification
+  rpc Predict(PredictRequest) returns (PredictResponse);
+}
+
+// petal length, petal width, sepal length, sepal width
+message PredictRequest {
+  float petal_length = 1;
+  float petal_width = 2;
+  float sepal_length = 3;
+  float sepal_width = 4;
+}
+
+message PredictResponse {
+  string predicition = 1;
+}
