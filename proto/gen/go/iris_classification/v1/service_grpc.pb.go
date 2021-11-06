@@ -32,7 +32,7 @@ func NewIrisClassificationServiceClient(cc grpc.ClientConnInterface) IrisClassif
 
 func (c *irisClassificationServiceClient) Predict(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictResponse, error) {
 	out := new(PredictResponse)
-	err := c.cc.Invoke(ctx, "/irisclassification.IrisClassificationService/Predict", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/iris_classification.v1.IrisClassificationService/Predict", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func _IrisClassificationService_Predict_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/irisclassification.IrisClassificationService/Predict",
+		FullMethod: "/iris_classification.v1.IrisClassificationService/Predict",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IrisClassificationServiceServer).Predict(ctx, req.(*PredictRequest))
@@ -91,7 +91,7 @@ func _IrisClassificationService_Predict_Handler(srv interface{}, ctx context.Con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var IrisClassificationService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "irisclassification.IrisClassificationService",
+	ServiceName: "iris_classification.v1.IrisClassificationService",
 	HandlerType: (*IrisClassificationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -100,5 +100,5 @@ var IrisClassificationService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "iris-classification/v1/service.proto",
+	Metadata: "iris_classification/v1/service.proto",
 }

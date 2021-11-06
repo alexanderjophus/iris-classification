@@ -26,11 +26,11 @@ func run(cmd *cobra.Command, args []string) {
 	grpcS := grpc.NewServer()
 	defer grpcS.GracefulStop()
 
-	pb.RegisterIrisClassificationServiceServer(grpcS, s)
+	pb.RegisterIrisClassificationServiceServer(grpcS, &s)
 
-	grpcAddressBack := ":32400"
-	log.Printf("listening to address %s", grpcAddressBack)
-	listener, err := net.Listen("tcp", grpcAddressBack)
+	address := ":32400"
+	log.Printf("listening to address %s", address)
+	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatal(err)
 	}

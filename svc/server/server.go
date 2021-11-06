@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
+	"math/rand"
+	"time"
 
 	pb "github.com/trelore/iris-classification/proto/gen/go/iris_classification/v1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // New returns a new S
@@ -18,7 +18,14 @@ type S struct {
 	pb.UnimplementedIrisClassificationServiceServer
 }
 
+var irisFlowers = []string{"iris setosa", "iris versicolor", "iris virginica"}
+
 // Predict implements proto
-func (s S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Confidence not implemented")
+func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictResponse, error) {
+	rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
+	iris := irisFlowers[rand.Intn(len(irisFlowers))]
+
+	return &pb.PredictResponse{
+		Predicition: iris,
+	}, nil
 }
