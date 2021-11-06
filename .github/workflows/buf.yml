@@ -17,4 +17,4 @@ jobs:
           # input: 'proto'
           # The 'main' branch of the GitHub repository that defines the module.
           # Note we specify the subdir to compare against.
-          against: 'https://github.com/${GITHUB_REPOSITORY}.git#branch=main,ref=HEAD~1,subdir=proto'
+          against: 'https://github.com/${GITHUB_REPOSITORY}.git#branch=main,ref=HEAD~1,subdir=proto/idl'
