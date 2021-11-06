@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "predict",
@@ -24,19 +22,22 @@ var rootCmd = &cobra.Command{
 func run(cmd *cobra.Command, args []string) {
 	cls, err := knn.ReloadKNNClassifier("model.cls")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("loading model: %w", err))
 	}
+	// todo read from input
 	toPredict := strings.NewReader("5.1,3.5,1.4,0.2")
+
 	rawData, err := base.ParseCSVToInstancesFromReader(toPredict, false)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("parse reader: %w", err))
 	}
 
 	fmt.Println(cls.TrainingData.AllAttributes())
 	fmt.Println(rawData.AllAttributes())
+
 	predictions, err := cls.Predict(rawData)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("predicting: %w", err))
 	}
 
 	// Prints precision/recall metrics

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -9,9 +10,8 @@ import (
 	"github.com/sjwhitworth/golearn/evaluation"
 	"github.com/sjwhitworth/golearn/knn"
 	"github.com/spf13/cobra"
+	"github.com/trelore/iris-classification/cmd/train/datasets"
 )
-
-var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -21,7 +21,15 @@ var rootCmd = &cobra.Command{
 }
 
 func run(cmd *cobra.Command, args []string) {
-	rawData, err := base.ParseCSVToInstances("datasets/iris.csv", false)
+	f, err := datasets.Data.Open("iris.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, ok := f.(io.ReadSeeker); !ok {
+		log.Fatal("file is not a ReadSeeker")
+	}
+
+	rawData, err := base.ParseCSVToInstancesFromReader(f.(io.ReadSeeker), false)
 	if err != nil {
 		log.Fatal(err)
 	}
