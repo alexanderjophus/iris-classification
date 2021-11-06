@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	pb "github.com/trelore/iris-classification/proto/gen/go/iris-classification"
+	pb "github.com/trelore/iris-classification/proto/gen/go/iris_classification/v1"
 	"github.com/trelore/iris-classification/svc/server"
 	"google.golang.org/grpc"
 )

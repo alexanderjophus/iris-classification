@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package iris_classification.v1;
+
+option go_package = "github.com/trelore/iris-classification/proto/gen/go;irisclassificationpb";
+
+// IrisClassificationService is a service to predict the Iris Classification given input
+service IrisClassificationService {
+  // Predict the Iris Classification
+  rpc Predict(PredictRequest) returns (PredictResponse);
+}
+
+// petal length, petal width, sepal length, sepal width
+message PredictRequest {
+  // length of petal
+  float petal_length = 1;
+  // width of petal
+  float petal_width = 2;
+  //length of sepal
+  float sepal_length = 3;
+  // width of sepal
+  float sepal_width = 4;
+}
+
+// the predication response
+message PredictResponse {
+  // prediction of what classification of iris it is
+  string predicition = 1;
+}

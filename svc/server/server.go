@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	pb "github.com/trelore/iris-classification/proto/gen/go/iris-classification"
+	pb "github.com/trelore/iris-classification/proto/gen/go/iris_classification/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
