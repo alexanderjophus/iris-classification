@@ -15,6 +15,7 @@ func New() S {
 
 // S Implements the Confidence service
 type S struct {
+	pb.UnimplementedIrisClassificationServiceServer
 }
 
 // Predict implements proto
