@@ -13,13 +13,13 @@ service IrisClassificationService {
 // petal length, petal width, sepal length, sepal width
 message PredictRequest {
   // length of petal
-  float petal_length = 1;
+  double petal_length = 1;
   // width of petal
-  float petal_width = 2;
+  double petal_width = 2;
   //length of sepal
-  float sepal_length = 3;
+  double sepal_length = 3;
   // width of sepal
-  float sepal_width = 4;
+  double sepal_width = 4;
 }
 
 // the predication response

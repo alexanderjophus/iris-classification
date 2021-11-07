@@ -12,8 +12,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var cfgFile string
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "svc",

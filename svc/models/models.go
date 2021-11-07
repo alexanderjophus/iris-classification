@@ -1,8 +1,8 @@
-package datasets
+package models
 
 import (
 	"embed"
 )
 
-//go:embed *.csv
+//go:embed *
 var Data embed.FS
