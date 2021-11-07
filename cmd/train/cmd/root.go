@@ -1,60 +1,194 @@
+// ammended from
+// https://github.com/gorgonia/gorgonia/blob/v0.9.17/examples/iris/main.go
 package cmd
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
-	"io"
 	"log"
+	"math"
 	"os"
 
-	"github.com/sjwhitworth/golearn/base"
-	"github.com/sjwhitworth/golearn/evaluation"
-	"github.com/sjwhitworth/golearn/knn"
+	"github.com/go-gota/gota/dataframe"
+	"github.com/go-gota/gota/series"
 	"github.com/spf13/cobra"
 	"github.com/trelore/iris-classification/cmd/train/datasets"
+	"gonum.org/v1/gonum/mat"
+	"gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "train",
-	Short: "A brief description of your application",
+	Short: "A cmd tool to train IRIS classification and save the model",
 	Run:   run,
 }
 
+// https://www.kaggle.com/amarpandey/implementing-linear-regression-on-iris-dataset/notebook
+//
 func run(cmd *cobra.Command, args []string) {
-	f, err := datasets.Data.Open("iris.csv")
+	g := gorgonia.NewGraph()
+	x, y := getXYMat()
+	xT := tensor.FromMat64(mat.DenseCopyOf(x))
+	yT := tensor.FromMat64(mat.DenseCopyOf(y))
+
+	s := yT.Shape()
+	yT.Reshape(s[0])
+
+	X := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
+	Y := gorgonia.NodeFromAny(g, yT, gorgonia.WithName("y"))
+	theta := gorgonia.NewVector(
+		g,
+		gorgonia.Float64,
+		gorgonia.WithName("theta"),
+		gorgonia.WithShape(xT.Shape()[1]),
+		gorgonia.WithInit(gorgonia.Gaussian(0, 1)))
+
+	pred := must(gorgonia.Mul(X, theta))
+
+	// Gorgonia might delete values from nodes so we are going to save it
+	// and print it out later
+	var predicted gorgonia.Value
+	gorgonia.Read(pred, &predicted)
+
+	squaredError := must(gorgonia.Square(must(gorgonia.Sub(pred, Y))))
+	cost := must(gorgonia.Mean(squaredError))
+
+	if _, err := gorgonia.Grad(cost, theta); err != nil {
+		log.Fatalf("Failed to backpropagate: %v", err)
+	}
+
+	machine := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(theta))
+	defer machine.Close()
+
+	model := []gorgonia.ValueGrad{theta}
+	solver := gorgonia.NewVanillaSolver(gorgonia.WithLearnRate(0.001))
+
+	fa := mat.Formatted(getThetaNormal(x, y), mat.Prefix("   "), mat.Squeeze())
+
+	fmt.Printf("ϴ: %v\n", fa)
+	iter := 10000
+	var err error
+	for i := 0; i < iter; i++ {
+		if err = machine.RunAll(); err != nil {
+			fmt.Printf("Error during iteration: %v: %v\n", i, err)
+			break
+		}
+
+		if err = solver.Step(model); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("theta: %2.2f  Iter: %v Cost: %2.3f Accuracy: %2.2f \r",
+			theta.Value(),
+			i,
+			cost.Value(),
+			accuracy(predicted.Data().([]float64), Y.Value().Data().([]float64)))
+
+		machine.Reset() // Reset is necessary in a loop like this
+	}
+	fmt.Println("")
+	err = save(theta.Value())
 	if err != nil {
 		log.Fatal(err)
 	}
-	if _, ok := f.(io.ReadSeeker); !ok {
-		log.Fatal("file is not a ReadSeeker")
-	}
 
-	rawData, err := base.ParseCSVToInstancesFromReader(f.(io.ReadSeeker), false)
+}
+
+func accuracy(prediction, y []float64) float64 {
+	var ok float64
+	for i := 0; i < len(prediction); i++ {
+		if math.Round(prediction[i]-y[i]) == 0 {
+			ok += 1.0
+		}
+	}
+	return ok / float64(len(y))
+}
+
+func getXYMat() (*matrix, *matrix) {
+	b, err := datasets.Data.ReadFile("iris.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
+	df := dataframe.ReadCSV(bytes.NewReader(b))
 
-	//Initialises a new KNN classifier
-	cls := knn.NewKnnClassifier("euclidean", "linear", 2)
-
-	//Do a training-test split
-	trainData, testData := base.InstancesTrainTestSplit(rawData, 0.50)
-	cls.Fit(trainData)
-
-	//Calculates the Euclidean distance and returns the most popular label
-	predictions, err := cls.Predict(testData)
-	if err != nil {
-		log.Fatal(err)
+	toValue := func(s series.Series) series.Series {
+		records := s.Records()
+		floats := make([]float64, len(records))
+		m := map[string]int{}
+		for i, r := range records {
+			if _, ok := m[r]; !ok {
+				m[r] = len(m) + 1
+			}
+			floats[i] = float64(m[r])
+		}
+		return series.Floats(floats)
 	}
 
-	// Prints precision/recall metrics
-	confusionMat, err := evaluation.GetConfusionMatrix(testData, predictions)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Unable to get confusion matrix: %s", err.Error()))
-	}
-	fmt.Println(evaluation.GetSummary(confusionMat))
+	xDF := df.Drop("species")
+	yDF := df.Select("species").Capply(toValue)
+	numRows, _ := xDF.Dims()
+	xDF = xDF.Mutate(series.New(one(numRows), series.Float, "bias"))
+	fmt.Println(xDF.Describe())
+	fmt.Println(yDF.Describe())
 
-	cls.Save("model.cls")
+	return &matrix{xDF}, &matrix{yDF}
+}
+
+func getThetaNormal(x, y *matrix) *mat.Dense {
+	xt := mat.DenseCopyOf(x).T()
+	var xtx mat.Dense
+	xtx.Mul(xt, x)
+	var invxtx mat.Dense
+	invxtx.Inverse(&xtx)
+	var xty mat.Dense
+	xty.Mul(xt, y)
+	var output mat.Dense
+	output.Mul(&invxtx, &xty)
+
+	return &output
+}
+
+type matrix struct {
+	dataframe.DataFrame
+}
+
+func (m matrix) At(i, j int) float64 {
+	return m.Elem(i, j).Float()
+}
+
+func (m matrix) T() mat.Matrix {
+	return mat.Transpose{Matrix: m}
+}
+
+func must(n *gorgonia.Node, err error) *gorgonia.Node {
+	if err != nil {
+		panic(err)
+	}
+	return n
+}
+
+func one(size int) []float64 {
+	one := make([]float64, size)
+	for i := 0; i < size; i++ {
+		one[i] = 1.0
+	}
+	return one
+}
+
+func save(value gorgonia.Value) error {
+	f, err := os.Create("theta.bin")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	enc := gob.NewEncoder(f)
+	err = enc.Encode(value)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

@@ -1,15 +1,19 @@
+// modified from
+// https://github.com/gorgonia/gorgonia/blob/v0.9.17/examples/iris/cmd/main.go
 package cmd
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"log"
+	"math"
 	"os"
-	"strings"
 
-	"github.com/sjwhitworth/golearn/base"
-	"github.com/sjwhitworth/golearn/evaluation"
-	"github.com/sjwhitworth/golearn/knn"
 	"github.com/spf13/cobra"
+	"github.com/trelore/iris-classification/cmd/predict/models"
+	"gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -20,32 +24,47 @@ var rootCmd = &cobra.Command{
 }
 
 func run(cmd *cobra.Command, args []string) {
-	cls, err := knn.ReloadKNNClassifier("model.cls")
+	b, err := models.Data.ReadFile("theta.bin")
 	if err != nil {
-		log.Fatal(fmt.Errorf("loading model: %w", err))
+		log.Fatal(err)
 	}
-	// todo read from input
-	toPredict := strings.NewReader("5.1,3.5,1.4,0.2")
-
-	rawData, err := base.ParseCSVToInstancesFromReader(toPredict, false)
+	dec := gob.NewDecoder(bytes.NewReader(b))
+	var thetaT *tensor.Dense
+	err = dec.Decode(&thetaT)
 	if err != nil {
-		log.Fatal(fmt.Errorf("parse reader: %w", err))
+		log.Fatal(err)
 	}
-
-	fmt.Println(cls.TrainingData.AllAttributes())
-	fmt.Println(rawData.AllAttributes())
-
-	predictions, err := cls.Predict(rawData)
+	g := gorgonia.NewGraph()
+	theta := gorgonia.NodeFromAny(g, thetaT, gorgonia.WithName("theta"))
+	values := make([]float64, 5)
+	xT := tensor.New(tensor.WithBacking(values))
+	x := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
+	y, err := gorgonia.Mul(x, theta)
 	if err != nil {
-		log.Fatal(fmt.Errorf("predicting: %w", err))
+		log.Fatal(err)
 	}
+	machine := gorgonia.NewTapeMachine(g)
+	defer machine.Close()
+	values[4] = 1.0
+	values[0] = 5.1
+	values[1] = 3.5
+	values[2] = 1.4
+	values[3] = 0.2
 
-	// Prints precision/recall metrics
-	confusionMat, err := evaluation.GetConfusionMatrix(rawData, predictions)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Unable to get confusion matrix: %s", err.Error()))
+	if err = machine.RunAll(); err != nil {
+		log.Fatal(err)
 	}
-	fmt.Println(evaluation.GetSummary(confusionMat))
+	switch math.Round(y.Value().Data().(float64)) {
+	case 1:
+		fmt.Println("setosa")
+	case 2:
+		fmt.Println("virginica")
+	case 3:
+		fmt.Println("versicolor")
+	default:
+		fmt.Println("unknown iris")
+	}
+	machine.Reset()
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
