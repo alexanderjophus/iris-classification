@@ -10,7 +10,7 @@ service IrisClassificationService {
   rpc Predict(PredictRequest) returns (PredictResponse);
 }
 
-// petal length, petal width, sepal length, sepal width
+// sepal length, sepal width, petal length, petal width
 message PredictRequest {
   //length of sepal
   double sepal_length = 1;
