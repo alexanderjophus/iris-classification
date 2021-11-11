@@ -29,7 +29,7 @@ jobs:
 
   build-publish:
     runs-on: ubuntu-latest
-    needs: [ buf test ]
+    needs: [ buf, test ]
     steps:
       # checkout code
       - uses: actions/checkout@v2
