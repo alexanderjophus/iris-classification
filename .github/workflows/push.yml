@@ -53,4 +53,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: trelore/iris-classification:latest
+          tags: ghcr.io/trelore/iris-classification:latest
