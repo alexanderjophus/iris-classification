@@ -39,7 +39,7 @@ jobs:
         with:
           go-version: 1.17
       - name: create model
-        run: go run go run cmd/train/main.go
+        run: go run cmd/train/main.go
       - run: mv theta.bin svc/models/theta.bin
 
       - name: Login to GitHub Container Registry
