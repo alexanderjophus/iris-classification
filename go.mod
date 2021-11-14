@@ -11,7 +11,6 @@ require (
 
 require (
 	github.com/go-gota/gota v0.12.0
-	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 // indirect
@@ -26,7 +25,6 @@ require (
 require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
@@ -45,6 +43,7 @@ require (
 	github.com/chewxy/math32 v1.0.7-0.20210223031236-a3549c8cb6a9 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/flatbuffers v1.12.0 // indirect
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/leesper/go_rng v0.0.0-20171009123644-5344a9259b21 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

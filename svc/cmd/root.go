@@ -10,8 +10,8 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	otgrpc "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
@@ -30,6 +30,10 @@ var rootCmd = &cobra.Command{
 	Run:   run,
 }
 
+const (
+	serviceName = "iris-classification"
+)
+
 func run(cmd *cobra.Command, args []string) {
 	s := server.New()
 
@@ -39,10 +43,8 @@ func run(cmd *cobra.Command, args []string) {
 	}
 	defer zapLogger.Sync()
 
-	// Sample configuration for testing. Use constant sampling to sample every trace
-	// and enable LogSpan to log every span via configured Logger.
 	cfg := jaegercfg.Configuration{
-		ServiceName: "iris-classifier",
+		ServiceName: serviceName,
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
 			Param: 1,
@@ -56,12 +58,13 @@ func run(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Set the singleton opentracing.Tracer with the Jaeger tracer.
-	opentracing.SetGlobalTracer(tracer)
 	defer closer.Close()
 
+	// Set the singleton opentracing.Tracer with the Jaeger tracer.
+	opentracing.SetGlobalTracer(tracer)
+
 	middlewares := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-		otgrpc.OpenTracingServerInterceptor(tracer),
+		grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(tracer)),
 		grpc_prometheus.UnaryServerInterceptor,
 		grpc_zap.UnaryServerInterceptor(zapLogger),
 		grpc_recovery.UnaryServerInterceptor(),
