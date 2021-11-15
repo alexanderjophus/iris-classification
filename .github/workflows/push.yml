@@ -39,3 +39,5 @@ jobs:
       with:
         iac_type: 'kustomize'
         iac_dir: "./kustomize"
+        only_warn: true
+        sarif_upload: true
