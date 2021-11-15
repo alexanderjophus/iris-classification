@@ -38,5 +38,4 @@ jobs:
       uses: accurics/terrascan-action@main
       with:
         iac_type: 'kustomize'
-        iac_version: 'v3'
         iac_dir: "./kustomize"
