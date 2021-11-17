@@ -16,9 +16,6 @@ spec:
       containers:
       - name: service
         image: ghcr.io/trelore/iris-classification
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsNonRoot: true
         resources:
           requests:
             memory: "32Mi"
