@@ -1,7 +1,9 @@
 package math32
 
-import "math"
-
+// Acos returns the arccosine, in radians, of x.
+//
+// Special case is:
+//	Acos(x) = NaN if x < -1 or x > 1
 func Acos(x float32) float32 {
-	return float32(math.Acos(float64(x)))
+	return Pi/2 - Asin(x)
 }
