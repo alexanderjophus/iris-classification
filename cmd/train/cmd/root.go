@@ -66,9 +66,6 @@ func run(cmd *cobra.Command, args []string) {
 	model := []gorgonia.ValueGrad{theta}
 	solver := gorgonia.NewVanillaSolver(gorgonia.WithLearnRate(0.001))
 
-	fa := mat.Formatted(getThetaNormal(x, y), mat.Prefix("   "), mat.Squeeze())
-
-	fmt.Printf("ϴ: %v\n", fa)
 	iter := 10000
 	var err error
 	for i := 0; i < iter; i++ {
@@ -126,8 +123,6 @@ func getXYMat() (*matrix, *matrix) {
 	yDF := df.Select("species").Capply(toValue)
 	numRows, _ := xDF.Dims()
 	xDF = xDF.Mutate(series.New(one(numRows), series.Float, "bias"))
-	fmt.Println(xDF.Describe())
-	fmt.Println(yDF.Describe())
 
 	return &matrix{xDF}, &matrix{yDF}
 }
