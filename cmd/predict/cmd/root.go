@@ -24,9 +24,8 @@ var rootCmd = &cobra.Command{
 }
 
 func run(cmd *cobra.Command, args []string) {
-	dec := gob.NewDecoder(bytes.NewReader(models.Data))
 	var thetaT *tensor.Dense
-	err := dec.Decode(&thetaT)
+	err := gob.NewDecoder(bytes.NewReader(models.Data)).Decode(&thetaT)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,21 +41,24 @@ func run(cmd *cobra.Command, args []string) {
 	machine := gorgonia.NewTapeMachine(g)
 	defer machine.Close()
 	values[4] = 1.0
-	values[0] = 5.1
-	values[1] = 3.5
-	values[2] = 1.4
-	values[3] = 0.2
+	values[0] = 7.0
+	values[1] = 3.2
+	values[2] = 4.7
+	values[3] = 1.4
 
 	if err = machine.RunAll(); err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Println(y.Value().Data().(float64))
+
 	switch math.Round(y.Value().Data().(float64)) {
 	case 1:
 		fmt.Println("setosa")
 	case 2:
-		fmt.Println("virginica")
-	case 3:
 		fmt.Println("versicolor")
+	case 3:
+		fmt.Println("virginica")
 	default:
 		fmt.Println("unknown iris")
 	}

@@ -34,23 +34,23 @@ type S struct {
 // Predict implements proto
 func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictResponse, error) {
 	g := gorgonia.NewGraph()
-	theta := gorgonia.NodeFromAny(g, s.thetaT)
+	theta := gorgonia.NodeFromAny(g, s.thetaT, gorgonia.WithName("theta"))
 
-	values := []float64{
-		req.GetSepalLength(),
-		req.GetSepalWidth(),
-		req.GetPetalLength(),
-		req.GetPetalWidth(),
-		1.0,
-	}
+	values := make([]float64, 5)
 	xT := tensor.New(tensor.WithBacking(values))
-	x := gorgonia.NodeFromAny(g, xT)
+	x := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
 	y, err := gorgonia.Mul(x, theta)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	machine := gorgonia.NewTapeMachine(g)
 	defer machine.Close()
+
+	values[4] = 1.0
+	values[0] = req.GetSepalLength()
+	values[1] = req.GetSepalWidth()
+	values[2] = req.GetPetalLength()
+	values[3] = req.GetPetalWidth()
 
 	if err = machine.RunAll(); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -62,9 +62,9 @@ func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictRes
 	case 1:
 		class = "setosa"
 	case 2:
-		class = "virginica"
-	case 3:
 		class = "versicolor"
+	case 3:
+		class = "virginica"
 	default:
 		return nil, status.Error(codes.Internal, "unknown iris")
 	}
