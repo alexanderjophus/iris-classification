@@ -24,13 +24,9 @@ var rootCmd = &cobra.Command{
 }
 
 func run(cmd *cobra.Command, args []string) {
-	b, err := models.Data.ReadFile("theta.bin")
-	if err != nil {
-		log.Fatal(err)
-	}
-	dec := gob.NewDecoder(bytes.NewReader(b))
+	dec := gob.NewDecoder(bytes.NewReader(models.Data))
 	var thetaT *tensor.Dense
-	err = dec.Decode(&thetaT)
+	err := dec.Decode(&thetaT)
 	if err != nil {
 		log.Fatal(err)
 	}

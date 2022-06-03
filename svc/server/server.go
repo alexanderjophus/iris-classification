@@ -17,12 +17,8 @@ import (
 
 // New returns a new S
 func New() S {
-	b, err := models.Data.ReadFile("theta.bin")
-	if err != nil {
-		log.Fatal(err)
-	}
 	var thetaT *tensor.Dense
-	err = gob.NewDecoder(bytes.NewReader(b)).Decode(&thetaT)
+	err := gob.NewDecoder(bytes.NewReader(models.Data)).Decode(&thetaT)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +34,7 @@ type S struct {
 // Predict implements proto
 func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictResponse, error) {
 	g := gorgonia.NewGraph()
-	theta := gorgonia.NodeFromAny(g, s.thetaT, gorgonia.WithName("theta"))
+	theta := gorgonia.NodeFromAny(g, s.thetaT)
 
 	values := []float64{
 		req.GetSepalLength(),
@@ -48,7 +44,7 @@ func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictRes
 		1.0,
 	}
 	xT := tensor.New(tensor.WithBacking(values))
-	x := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
+	x := gorgonia.NodeFromAny(g, xT)
 	y, err := gorgonia.Mul(x, theta)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -59,6 +55,7 @@ func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictRes
 	if err = machine.RunAll(); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	defer machine.Reset()
 
 	var class string
 	switch math.Round(y.Value().Data().(float64)) {
@@ -71,7 +68,6 @@ func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictRes
 	default:
 		return nil, status.Error(codes.Internal, "unknown iris")
 	}
-	machine.Reset()
 	return &pb.PredictResponse{
 		Predicition: class,
 	}, nil

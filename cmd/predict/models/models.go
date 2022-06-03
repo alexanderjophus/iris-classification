@@ -1,8 +1,8 @@
 package models
 
 import (
-	"embed"
+	_ "embed"
 )
 
-//go:embed *
-var Data embed.FS
+//go:embed theta.bin
+var Data []byte

@@ -107,11 +107,7 @@ func accuracy(prediction, y []float64) float64 {
 }
 
 func getXYMat() (*matrix, *matrix) {
-	b, err := datasets.Data.ReadFile("iris.csv")
-	if err != nil {
-		log.Fatal(err)
-	}
-	df := dataframe.ReadCSV(bytes.NewReader(b))
+	df := dataframe.ReadCSV(bytes.NewReader(datasets.Data))
 
 	toValue := func(s series.Series) series.Series {
 		records := s.Records()

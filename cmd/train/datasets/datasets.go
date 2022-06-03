@@ -1,8 +1,8 @@
 package datasets
 
 import (
-	"embed"
+	_ "embed"
 )
 
-//go:embed *.csv
-var Data embed.FS
+//go:embed iris.csv
+var Data []byte

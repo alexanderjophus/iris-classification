@@ -20,7 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// petal length, petal width, sepal length, sepal width
+// sepal length, sepal width, petal length, petal width
 type PredictRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
