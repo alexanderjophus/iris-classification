@@ -3,7 +3,6 @@ plugins:
   - name: go
     out: proto/gen/go
     opt: paths=source_relative
-  - name: go-grpc
+  - name: connect-go
     out: proto/gen/go
-    opt:
-      - paths=source_relative
+    opt: paths=source_relative

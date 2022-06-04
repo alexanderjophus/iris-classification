@@ -4,35 +4,34 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"fmt"
 	"log"
 	"math"
 
+	"github.com/bufbuild/connect-go"
 	pb "github.com/trelore/iris-classification/proto/gen/go/iris_classification/v1"
 	"github.com/trelore/iris-classification/svc/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
 // New returns a new S
-func New() S {
+func New() *S {
 	var thetaT *tensor.Dense
 	err := gob.NewDecoder(bytes.NewReader(models.Data)).Decode(&thetaT)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return S{thetaT: thetaT}
+	return &S{thetaT: thetaT}
 }
 
 // S Implements the IrisClassificationService service
 type S struct {
 	thetaT *tensor.Dense
-	pb.UnimplementedIrisClassificationServiceServer
 }
 
 // Predict implements proto
-func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictResponse, error) {
+func (s *S) Predict(ctx context.Context, req *connect.Request[pb.PredictRequest]) (*connect.Response[pb.PredictResponse], error) {
 	g := gorgonia.NewGraph()
 	theta := gorgonia.NodeFromAny(g, s.thetaT, gorgonia.WithName("theta"))
 
@@ -41,19 +40,19 @@ func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictRes
 	x := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
 	y, err := gorgonia.Mul(x, theta)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	machine := gorgonia.NewTapeMachine(g)
 	defer machine.Close()
 
 	values[4] = 1.0
-	values[0] = req.GetSepalLength()
-	values[1] = req.GetSepalWidth()
-	values[2] = req.GetPetalLength()
-	values[3] = req.GetPetalWidth()
+	values[0] = req.Msg.GetSepalLength()
+	values[1] = req.Msg.GetSepalWidth()
+	values[2] = req.Msg.GetPetalLength()
+	values[3] = req.Msg.GetPetalWidth()
 
 	if err = machine.RunAll(); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	defer machine.Reset()
 
@@ -66,9 +65,11 @@ func (s *S) Predict(ctx context.Context, req *pb.PredictRequest) (*pb.PredictRes
 	case 3:
 		class = "virginica"
 	default:
-		return nil, status.Error(codes.Internal, "unknown iris")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unknown iris"))
 	}
-	return &pb.PredictResponse{
+	res := connect.NewResponse(&pb.PredictResponse{
 		Predicition: class,
-	}, nil
+	})
+	res.Header().Set("Greet-Version", "v1")
+	return res, nil
 }

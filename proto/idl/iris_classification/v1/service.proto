@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package iris_classification.v1;
 
-option go_package = "github.com/trelore/iris-classification/proto/gen/go;irisclassificationpb";
+option go_package = "github.com/trelore/iris-classification/proto/gen/go/iris_classification/v1;irisclassificationpb";
 
 // IrisClassificationService is a service to predict the Iris Classification given input
 service IrisClassificationService {

@@ -1,4 +1,4 @@
-FROM golang:1.17 AS builder
+FROM golang:1.18 AS builder
 WORKDIR /go/src/github.com/trelore/iris-classification/
 COPY . /go/src/github.com/trelore/iris-classification
 RUN go run cmd/train/main.go
